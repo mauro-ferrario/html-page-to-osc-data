@@ -7,7 +7,6 @@ const Settings = require("./Settings");
 const  request = require('request');
 const osHomedir = require('os-homedir');
 const settings = new Settings();
-const s = settings;
 let appPath = path.join(__dirname);
 //appPath = path.join(osHomedir(), 'rigidity');
 
@@ -19,7 +18,6 @@ settings.add('receivePort', 12346);
 settings.add('sendPort', 12345);
 settings.add('url', 'http://mduranti.web.cern.ch/mduranti/');
 settings.add('delayInSeconds', '10');
-settings.add('oscAddress', '/data');
 settings.add('oscAddress', '/data');
 
 const fileUrl = path.join(appPath, 'settings.json');
