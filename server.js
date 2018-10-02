@@ -99,6 +99,7 @@ udpPort = new osc.UDPPort({
 const server = app.listen(serverPort, serverIp, function () {
     console.log("Server started on " + serverIp + ":" + serverPort);
     console.log("Fetch the website "+url+" every "+parseFloat(delay/1000,2)+" seconds")
+    console.log("Send OSC message to "+ipToSend+" at port "+sendPort);
     getDataArray();
 });
 
