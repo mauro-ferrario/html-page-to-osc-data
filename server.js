@@ -2,9 +2,7 @@ const path = require('path');
 const express = require('express');
 const app = express();
 const serverIp = '0.0.0.0';
-const osc = require("osc");
-let udpPort;
-let udpReady = false;
+const UdpPortHandler = require("./UDPPortHandler.js");
 const  request = require('request');
 const fs = require('fs');
 const osHomedir = require('os-homedir');
@@ -85,23 +83,13 @@ function sendDataToOsc(data){
             value: d
         }
     });
-    if(udpReady){
-        udpPort.send({
-            address: oscAddress,
-            args: oscData
-        }, ipToSend, sendPort);
-     }
+    udpHandler.sendData(oscAddress, oscData);
 }
 
 
 readSettings('settings.json');
 
-
-udpPort = new osc.UDPPort({
-    localAddress: serverIp,
-    localPort: receivePort
-});
-
+const udpHandler = new UdpPortHandler(serverIp, receivePort, ipToSend, sendPort);
 
 const server = app.listen(serverPort, serverIp, function () {
     console.log("Server started on " + serverIp + ":" + serverPort);
@@ -114,13 +102,3 @@ const server = app.listen(serverPort, serverIp, function () {
 app.get('/', function (req, res) {
     
 });
-
-udpPort.on("error", function (error) {
-    console.log("An error occurred: ", error.message);
-});
-
-udpPort.on("ready", function () {
-    udpReady = true;
-});
-
-udpPort.open();
