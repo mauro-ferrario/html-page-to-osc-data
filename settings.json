@@ -1,0 +1,7 @@
+{
+    "ipToSend" : "0.0.0.0",
+    "receivePort": "55555",
+    "sendPort": "12345",
+    "url": "http://mduranti.web.cern.ch/mduranti/",
+    "delayInSeconds": "10"
+}

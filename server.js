@@ -1,18 +1,32 @@
 const express = require('express');
 const app = express();
-const port = 3000;
-const ip = '0.0.0.0';
-const receivePort = 12346;
-const sendPort = 12345;
+const serverPort = 3000;
+const serverIp = '0.0.0.0';
 const osc = require("osc");
-const udpPort = new osc.UDPPort({
-    localAddress: ip,
-    localPort: receivePort
-});
+let udpPort;
 let udpReady = false;
 const  request = require('request');
-const url = 'http://mduranti.web.cern.ch/mduranti/';
-const delay = 10000;
+const fs = require('fs');
+let settings = {};
+
+/* Variables */
+
+let ipToSend = '0.0.0.0';
+let receivePort = 12346;
+let sendPort = 12345;
+let url = 'http://mduranti.web.cern.ch/mduranti/';
+let delay = 10000;
+
+
+function readSettings(fileName){
+    const contents = fs.readFileSync(__dirname + '/'+fileName);
+    settings = JSON.parse(contents);
+    ipToSend        =    settings.ipToSend;
+    receivePort     = settings.receivePort;
+    sendPort        = settings.sendPort;
+    url             = settings.url;
+    delay           = settings.delayInSeconds*1000;
+}
 
 
 function getDataArray(){
@@ -21,6 +35,11 @@ function getDataArray(){
         if(!error && status == 200){     
             onGetDataFromUrl(body); 
         } 
+        else{
+            console.log(error);
+            console.log(status);
+        }
+        setTimeout(getDataArray, delay);
     })
 }
 
@@ -49,7 +68,6 @@ function onGetDataFromUrl(body){
     else{
         console.log(time +" - No data from the url");
     }
-    setTimeout(getDataArray, delay);
 }
 
 function sendDataToOsc(data){
@@ -63,15 +81,26 @@ function sendDataToOsc(data){
         udpPort.send({
             address: "/data",
             args: oscData
-        }, ip, sendPort);
+        }, ipToSend, sendPort);
      }
 }
 
-const server = app.listen(port, ip, function () {
-    console.log("*** Remote server *** Server started on " + ip + ":" + port);
+
+readSettings('settings.json');
+
+
+udpPort = new osc.UDPPort({
+    localAddress: serverIp,
+    localPort: receivePort
+});
+
+
+const server = app.listen(serverPort, serverIp, function () {
+    console.log("Server started on " + serverIp + ":" + serverPort);
     console.log("Fetch the website "+url+" every "+parseFloat(delay/1000,2)+" seconds")
     getDataArray();
 });
+
   
 app.get('/', function (req, res) {
     
@@ -86,4 +115,3 @@ udpPort.on("ready", function () {
 });
 
 udpPort.open();
-
