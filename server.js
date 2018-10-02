@@ -40,7 +40,7 @@ function onGetDataFromUrl(body){
             const singleData = parseFloat(newBody);
             data.push(singleData)
             dataToFetch = dataToFetch.substring(indexOfFirstWord+word.length);
-            if(a%100 ==0){
+            if((a+1)%100 ==0){
                 sendDataToOsc(data);
                 data = [];
             }
