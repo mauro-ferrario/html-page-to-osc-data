@@ -1,4 +1,5 @@
 {
+    "serverPort" : "3000",
     "ipToSend" : "0.0.0.0",
     "receivePort": "55555",
     "sendPort": "12345",

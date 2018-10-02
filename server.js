@@ -1,6 +1,5 @@
 const express = require('express');
 const app = express();
-const serverPort = 3000;
 const serverIp = '0.0.0.0';
 const osc = require("osc");
 let udpPort;
@@ -11,6 +10,7 @@ let settings = {};
 
 /* Variables */
 
+let serverPort = 3000;
 let ipToSend = '0.0.0.0';
 let receivePort = 12346;
 let sendPort = 12345;
@@ -21,7 +21,8 @@ let delay = 10000;
 function readSettings(fileName){
     const contents = fs.readFileSync(__dirname + '/'+fileName);
     settings = JSON.parse(contents);
-    ipToSend        =    settings.ipToSend;
+    serverPort      = settings.serverPort;
+    ipToSend        = settings.ipToSend;
     receivePort     = settings.receivePort;
     sendPort        = settings.sendPort;
     url             = settings.url;
