@@ -1,8 +1,9 @@
 {
     "serverPort" : "3000",
     "ipToSend" : "0.0.0.0",
-    "receivePort": "55555",
+    "receivePort": "55556",
     "sendPort": "12345",
     "url": "http://mduranti.web.cern.ch/mduranti/",
-    "delayInSeconds": "10"
+    "delayInSeconds": "10",
+    "oscAddress": "/data"
 }

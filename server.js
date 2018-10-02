@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const app = express();
 const serverIp = '0.0.0.0';
@@ -6,6 +7,7 @@ let udpPort;
 let udpReady = false;
 const  request = require('request');
 const fs = require('fs');
+const osHomedir = require('os-homedir');
 let settings = {};
 
 /* Variables */
@@ -16,10 +18,13 @@ let receivePort = 12346;
 let sendPort = 12345;
 let url = 'http://mduranti.web.cern.ch/mduranti/';
 let delay = 10000;
+let oscAddress = "/data";
+let appPath = path.join(osHomedir(), 'rigidity');
 
 
 function readSettings(fileName){
-    const contents = fs.readFileSync(__dirname + '/'+fileName);
+    const fileUrl = path.join(appPath, fileName);
+    const contents = fs.readFileSync(fileUrl);
     settings = JSON.parse(contents);
     serverPort      = settings.serverPort;
     ipToSend        = settings.ipToSend;
@@ -27,6 +32,8 @@ function readSettings(fileName){
     sendPort        = settings.sendPort;
     url             = settings.url;
     delay           = settings.delayInSeconds*1000;
+    if(settings.oscAddress)
+        oscAddress  = settings.oscAddress;
 }
 
 
@@ -80,7 +87,7 @@ function sendDataToOsc(data){
     });
     if(udpReady){
         udpPort.send({
-            address: "/data",
+            address: oscAddress,
             args: oscData
         }, ipToSend, sendPort);
      }
