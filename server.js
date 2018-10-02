@@ -2,38 +2,29 @@ const path = require('path');
 const express = require('express');
 const app = express();
 const serverIp = '0.0.0.0';
-const UdpPortHandler = require("./UDPPortHandler.js");
+const UdpPortHandler = require("./UDPPortHandler");
+const Settings = require("./Settings");
 const  request = require('request');
-const fs = require('fs');
 const osHomedir = require('os-homedir');
-let settings = {};
+const settings = new Settings();
+const s = settings;
+let appPath = path.join(__dirname);
+//appPath = path.join(osHomedir(), 'rigidity');
 
 /* Variables */
 
-let serverPort = 3000;
-let ipToSend = '0.0.0.0';
-let receivePort = 12346;
-let sendPort = 12345;
-let url = 'http://mduranti.web.cern.ch/mduranti/';
-let delay = 10000;
-let oscAddress = "/data";
-let appPath = path.join(osHomedir(), 'rigidity');
+settings.add('serverPort', 3000);
+settings.add('ipToSend', '0.0.0.0');
+settings.add('receivePort', 12346);
+settings.add('sendPort', 12345);
+settings.add('url', 'http://mduranti.web.cern.ch/mduranti/');
+settings.add('delayInSeconds', '10');
+settings.add('oscAddress', '/data');
+settings.add('oscAddress', '/data');
 
-
-function readSettings(fileName){
-    const fileUrl = path.join(appPath, fileName);
-    const contents = fs.readFileSync(fileUrl);
-    settings = JSON.parse(contents);
-    serverPort      = settings.serverPort;
-    ipToSend        = settings.ipToSend;
-    receivePort     = settings.receivePort;
-    sendPort        = settings.sendPort;
-    url             = settings.url;
-    delay           = settings.delayInSeconds*1000;
-    if(settings.oscAddress)
-        oscAddress  = settings.oscAddress;
-}
-
+const fileUrl = path.join(appPath, 'settings.json');
+settings.loadFromFile(fileUrl);
+let {serverPort,ipToSend,receivePort,sendPort,url,delayInSeconds,oscAddress} = settings.getAll();
 
 function getDataArray(){
     request(url, function (error, response, body) {
@@ -45,7 +36,7 @@ function getDataArray(){
             console.log(error);
             console.log(status);
         }
-        setTimeout(getDataArray, delay);
+        setTimeout(getDataArray, delayInSeconds*1000);
     })
 }
 
@@ -86,14 +77,11 @@ function sendDataToOsc(data){
     udpHandler.sendData(oscAddress, oscData);
 }
 
-
-readSettings('settings.json');
-
 const udpHandler = new UdpPortHandler(serverIp, receivePort, ipToSend, sendPort);
 
 const server = app.listen(serverPort, serverIp, function () {
     console.log("Server started on " + serverIp + ":" + serverPort);
-    console.log("Fetch the website "+url+" every "+parseFloat(delay/1000,2)+" seconds")
+    console.log("Fetch the website "+url+" every "+delayInSeconds+" seconds")
     console.log("Send OSC message to "+ipToSend+" at port "+sendPort);
     getDataArray();
 });
