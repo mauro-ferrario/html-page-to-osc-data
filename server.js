@@ -8,6 +8,7 @@ const  request = require('request');
 const osHomedir = require('os-homedir');
 const settings = new Settings();
 let appPath = path.join(__dirname);
+let timeAlreadySent = [];
 // appPath = path.join(osHomedir(), 'rigidity');
 
 /* Variables */
@@ -54,14 +55,17 @@ function onGetDataFromUrl(body){
             const indexOfRate = dataToFetch.indexOf('Rate'); 
             const indexOfFirstWord = dataToFetch.indexOf(word);
             let newBody = dataToFetch.substring(indexOfFirstWord, 1000);
-            const indexOfFirstBr = newBody.indexOf('<br>');
+            let indexOfFirstBr = newBody.indexOf('<br>');
+            if(indexOfFirstBr < 0){
+                indexOfFirstBr = newBody.indexOf('</body>');
+            }
             newBody = newBody.substring(word.length+1, indexOfFirstBr-1);
             const singleData = parseFloat(newBody);
             if(indexOfTime < indexOfFirstWord && indexOfTime != -1){
                 // Send previous block of data and save new time and  rate
                 // Send osc message for each data
                 if(data.length > 0 && nextTime != ""){
-                    sendBundle(nextTime, nextRate, data);
+                    sendBlock(nextTime, nextRate, data);
                     data = [];
                 }
                 nextTime = dataToFetch.substring(indexOfTime+5, indexOfTime+15);
@@ -72,10 +76,37 @@ function onGetDataFromUrl(body){
             dataToFetch = dataToFetch.substring(indexOfFirstWord+word.length);
         }
         // Sent the last group
-        sendBundle(nextTime, nextRate, data);
+        sendBlock(nextTime, nextRate, data);
+        // sendBundle(nextTime, nextRate, data);
     }
     else{
         console.log(time +" - No data from the url");
+    }
+}
+
+function sendBlock(time, rate, data){
+    if(!timeAlreadySent.includes(time)){
+        timeAlreadySent.push(time);
+        let dataToSend = [
+            {
+                type: 's',
+                value: time.toString()
+            },
+            {
+                type: 's',
+                value: rate.toString()
+            },
+        ];
+        let rigidbodies = [];
+        [...data].map((d) => {
+            const oscData = {
+                type: 'f',
+                value: d
+            };
+            rigidbodies.push(oscData);
+        });   
+        dataToSend = [...dataToSend, ...rigidbodies];
+        udpHandler.sendData(oscAddress, dataToSend);
     }
 }
 
@@ -114,6 +145,7 @@ function sendBundle(time, rate, data){
         address: '/rigidbody',
         args: rigidbodies
     };
+
     udpHandler.sendBundle([timeToSend, rateToSend,rigidbodyToSend]);             
 }
 
