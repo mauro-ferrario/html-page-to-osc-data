@@ -8,7 +8,7 @@ const  request = require('request');
 const osHomedir = require('os-homedir');
 const settings = new Settings();
 let appPath = path.join(__dirname);
-//appPath = path.join(osHomedir(), 'rigidity');
+// appPath = path.join(osHomedir(), 'rigidity');
 
 /* Variables */
 
@@ -17,6 +17,7 @@ settings.add('ipToSend', '0.0.0.0');
 settings.add('receivePort', 12346);
 settings.add('sendPort', 12345);
 settings.add('url', 'http://mduranti.web.cern.ch/mduranti/');
+
 settings.add('delayInSeconds', '10');
 settings.add('oscAddress', '/data');
 
@@ -40,29 +41,80 @@ function getDataArray(){
 
 function onGetDataFromUrl(body){
     const word = 'Rigidity';
-    var count = (body.match(/Rigidity/g) || []).length;
+    let count = (body.match(/Rigidity/g) || []).length;
     let data = [];
     let dataToFetch = body;
     const time = Date(Date.now()).toString();
+    let nextTime = "";
+    let nextRate = "";
     if(count > 0){
         console.log(time +" - Send OSC to port " + sendPort);
         for(let a = 0; a < count; a++){
+            const indexOfTime = dataToFetch.indexOf('Time');
+            const indexOfRate = dataToFetch.indexOf('Rate'); 
             const indexOfFirstWord = dataToFetch.indexOf(word);
             let newBody = dataToFetch.substring(indexOfFirstWord, 1000);
             const indexOfFirstBr = newBody.indexOf('<br>');
             newBody = newBody.substring(word.length+1, indexOfFirstBr-1);
             const singleData = parseFloat(newBody);
+            if(indexOfTime < indexOfFirstWord && indexOfTime != -1){
+                // Send previous block of data and save new time and  rate
+                // Send osc message for each data
+                if(data.length > 0 && nextTime != ""){
+                    sendBundle(nextTime, nextRate, data);
+                    data = [];
+                }
+                nextTime = dataToFetch.substring(indexOfTime+5, indexOfTime+15);
+                nextRate = dataToFetch.substring(indexOfRate+5, indexOfRate+8);
+
+            }
             data.push(singleData)
             dataToFetch = dataToFetch.substring(indexOfFirstWord+word.length);
-            if((a+1)%100 ==0){
-                sendDataToOsc(data);
-                data = [];
-            }
         }
+        // Sent the last group
+        sendBundle(nextTime, nextRate, data);
     }
     else{
         console.log(time +" - No data from the url");
     }
+}
+
+function sendBundle(time, rate, data){
+    const timeToSend = {
+        address: '/time',
+        args: [
+            {
+                type: 's',
+                value: time.toString()
+            }
+        ]
+    };
+    const rateToSend = {
+        address: '/rate',
+        args: [
+            {
+                type: 's',
+                value: rate.toString()
+            }
+        ]
+    };
+    
+    let rigidbodies = [];
+    //udpHandler.sendData('/time', time);
+    //udpHandler.sendData('/rate', rate);
+    [...data].map((d) => {
+        const oscData = {
+            type: 'f',
+            value: d
+        };
+        rigidbodies.push(oscData);
+        //udpHandler.sendData('/rigidbody', oscData);
+    });   
+    const rigidbodyToSend = {
+        address: '/rigidbody',
+        args: rigidbodies
+    };
+    udpHandler.sendBundle([timeToSend, rateToSend,rigidbodyToSend]);             
 }
 
 function sendDataToOsc(data){

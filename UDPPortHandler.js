@@ -24,6 +24,19 @@ module.exports = class udpPortHandler{
          }
     }
 
+    sendBundle(packets, _ip, _port){
+        const t = new Date();
+        const randomSecondsNext = t.setSeconds(t.getSeconds() + Math.random()*1000);
+        const ip = _ip ? _ip : this.addressToSend;
+        const port = _port ? _port : this.portToSend;
+        if(this.udpReady){
+            this.udpPort.send({
+                timeTag: randomSecondsNext,
+                packets: packets
+            }, ip, port);
+         }
+    }
+
     addUdpEvents(){
         this.udpPort.on("error", this.onError.bind(this));
         this.udpPort.on("ready", this.onReady.bind(this));
